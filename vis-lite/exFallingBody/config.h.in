@@ -1,0 +1,3 @@
+#define exFallingBody_VERSION_MAJOR @exFallingBody_VERSION_MAJOR@
+#define exFallingBody_VERSION_MINOR @exFallingBody_VERSION_MINOR@
+#define MY_VERBOSE @MY_VERBOSE@
