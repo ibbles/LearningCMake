@@ -1,3 +1,194 @@
+#############################################
+# It's Time To Do CMake Right
+#
+# https://pabloariasal.github.io/2018/02/19/its-time-to-do-cmake-right/
+#############################################
+
+
+# /JSONUtils/CMakeLists.txt
+cmake_minimum_required(VERSION 3.5)
+project(libjsonutils VERSION 1.0.0 LANGUAGES CXX)
+
+add_library(JSONUtils src/json_utils.cpp)
+
+target_include_directories(JSONUtils
+    PUBLIC
+        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE
+        $<{CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+
+target_compile_options(JSONUtils PRIVATE -Werror)
+
+target_compile_features(JSONUtils PRIVATE cxx_std_11)
+
+find_package(Boost 1.55 REQUIRED COMPONENTS regex)
+find_package(RapidJSON 1.0 REQUIRED MODULE)
+
+target_link_libraries(JSONUtils
+    PUBLIC
+        Boost::boost RapidJSON::RapidJSON
+    PRIVATE
+        Boost::regex
+)
+
+include(GNUInstallDirs)
+install(TARGEST JSONUtils
+    EXPORT jsonutils-export
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIBE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(EXPORT jsonutil-targets
+    FILE
+        JSONUtilsTArgets.cmake
+    NAMESPACE
+        JSONUtils::
+    DESTINATION
+        ${CMAKE_INSTALL_LIBDIR}/cmake/JSONUtils
+)
+
+
+
+
+# /Example/CMakeLists.txt
+cmake_minimum_required(CERSION 3.5)
+project(Example VERSION 1.0 LANGUAGES CXX)
+
+add_executable(example src/example.cpp)
+target_link_libraries(exampe JSONUtils::JSONUtils)
+
+
+
+#############################################
+# CMake Tutorial
+#
+# https://cmake.org/cmake/help/git-stage/guide/tutorial/index.html
+#############################################
+
+
+# A basic starting point
+
+# An executable built from source code files.
+
+# /CMakeLists.txt
+cmake_minimum_required(VERSION 3.10)
+project(Tutorial VERSION 1.0)
+
+option(USE_MYMATH "Use tutorial provided math implementation" ON)
+
+include(CheckSymbolExists)
+set(CMAKE_REQUIRED_LIBRARIES "m")
+check_symbol_exists(log "math.h" HAVE_LOG)
+check_symbol_exists(exp "math.h" HAVE_EXP)
+
+add_library(compiler_flags INTERFACE)
+target_compile_features(compiler_flags INTERFACE cxx_std_11)
+set(gcc_like_cxx "$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>")
+set(msvc_cxx "$<COMPILE_LANG_AND_ID:CXX,MSVC>")
+target_compile_options(compiler_flags INTERFACE
+    "$<${gcc_like_cxx}:$<BUILD_INTERFACE:-Wall;-Wshadow;-Wformat=2;-Wunused>>"
+    "$<${msvc_cxx}:$<BUILD_INTERFACE:-W3>>")
+
+configure_file(TutorialConfig.h.in TutorialConfig.h)
+if (USE_MYMATH)
+    add_subdirectory(MathFunctions)
+    list(APPEND EXTRA_LIBS MathFunctions)
+endif()
+add_executable(Tutorial tutorial.cxx)
+target_link_libraries(Tutorial PUBLIC ${EXTRA_LIBS})
+target_include_directories(Tutorial
+    PUBLIC
+    "${PROJECT_BINARY_DIR}")
+install(TARGETS Tutorial DESTINATION bin)
+install(FILES "${PROJECT_BINARY_DIR}/TutorialConfig.h" DESTINATION include)
+
+
+enable_testing()
+add_test(NAME Runs COMMAND Tutorial 25)
+add_test(NAME Usage COMMAND Tutorial)
+set_test_properties(Usage PROPERTIES
+    PASS_REUALAR_EXPRESSION "Usage:.*number")
+
+function(do_test target arg result)
+    add_test(NAME Comp${arg} COMMAND ${target} ${arg})
+    set_tests_properties(Comp${arg} PROPERTIES
+        PASS_REULAR_EXPRESSION ${result})
+endfunction()
+
+do_test(Tutorial 4 "4 is 2")
+do_test(Tutorial 9 "9 is 3")
+do_test(Tutorial 5 "5 is 2.236")
+do_test(Tutorial -25 "-25 is [-nan|nan|0]")
+
+include(InstallRequiredSystemLibraries)
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/License.txt)
+set(CPACK_PACKAGE_VERSION_MAJOR ${Tutorial_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${Tutorial_VERSION_MINOR})
+include(CPack)
+
+install(EXPORT MathFunctionsTargets
+    FILE MathFunctionsTargets.cmake
+    DESTINATION lib/cmake/MathFunctions)
+
+include(CMakePAckageConfigHelpers)
+configure_package_config_files(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsConfig.cmake"
+    INSTALL_DESTINATION "lib/cmake/example"
+    NO_SET_AND_CHECK_MACRO
+    NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsConfigVersion.cmake"
+    VERSION "${Tutorial_VERSION_MAJOR}.${Tutorial_VERSION_MINOR}"
+    COMPATIBILITY AnyNewerVersion)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsConfig.cmake
+    DESTINATION lib/cmake/MathFunctions)
+
+export(EXPORT MathFunctionsTarget
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/MathFunctionsTargets.cmake")
+
+
+# /TutorialConfig.h
+#define Tutorial_VERSION_MAJOR @Tutorial_VERSION_MAJOR@
+#define Tutorial_VERSION_MINOR @Tutorial_VERSION_MINOR@
+
+# /MathFunctions/CMakeLists.txt
+add_executable(MakeTable MakeTable.cxx)
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/Table.h
+    COMMAND MakeTable ${CMAKE_CURRENT_BINARY_DIR}/Table.h
+    DEPENDS MakeTable)
+
+add_library(MathFunctions mysqrt.cxx ${CMAKE_BINARY_DIR}/Table.h)
+target_include_directories(MathFunctions
+    INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>)
+install(TARGETS MathFunctions DESTINATION lib EXPORT MathFunctionsTargets)
+install(FILES MathFunctions.h DESTINATION include)
+
+
+# /Config.cmake.in
+@PACKAGE_INIT@
+include ( "${CMAKE_CURRENT_LIST_DIR}/MathFunctionsTargets.cmake" )
+
+
+
+
+
+
+
+
+#############################################
+# An Introduction to Modern CMake
+#
+# https://cliutils.gitlab.io/modern-cmake/
+#############################################
+
 ###
 # Introduction to the basics.
 ###
@@ -526,4 +717,33 @@ endif()
 # Exporting and installing
 ###
 
+# Different ways of making a library usable by other projects.
 
+# ... This entire chapter is a mess. I don't understand what he's trying to say.
+
+# Find module (the bad way)
+
+# Write a Find<MyPackage>.cmake script. These are intended as a work-around
+# for projects that don't support CMake.
+
+
+# Add subproject
+
+# This is when the source of a project is included as a directory in another
+# project. The parent project does `add_directory`, optionally passing in
+# `EXCLUDE_FROM_ALL`. When writing your `CMakeLists.txt` file, take note to use
+# `CMAKE_CURRENT_SOURCE_DIR` instead of `PROJECT_SOURCE_DIR` since the latter
+# will reference the root project. Does it really? I need to experiment with
+# this. One can test `CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME` to differentiate
+# between being built stand-alone or part of another project.
+#
+# Use aliases to setup namespaced names for your targets.
+add_library(MyLib::MyLib ALIAS MyLib)
+
+
+# Exporting
+
+# Exporting changed in CMake 3.15. Prior to this it wrote stuff to the user's
+# home directory.
+
+# And then stuff I don't really get. Time to disembark from this tutorial.
