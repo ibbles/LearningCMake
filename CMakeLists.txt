@@ -35,10 +35,10 @@ target_link_libraries(JSONUtils
 )
 
 include(GNUInstallDirs)
-install(TARGEST JSONUtils
+install(TARGETS JSONUtils
     EXPORT jsonutils-export
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIBE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(EXPORT jsonutil-targets
