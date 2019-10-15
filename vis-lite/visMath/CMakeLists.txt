@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
+project(visMath VERSION 0.2 LANGUAGES CXX)
 
-project(visMath VERSION 0.2)
+if (NOT DEFINED BUILD_SHARED_LIBS)
+    set(BUILD_SHARED_LIBS ON)
+endif()
 
 set(CMAKE_CXX_CLANG_TIDY
     clang-tidy;
@@ -9,13 +12,52 @@ set(CMAKE_CXX_CLANG_TIDY
 -google-readability-namespace-comments,-llvm-namespace-comment,\
 -google-readability-namespace-comments,-google-build-using-namespace")
 
-add_library(visMath SHARED src/visMath.cpp)
-target_include_directories(visMath PUBLIC "include")
-install(TARGETS visMath DESTINATION lib)
-install(DIRECTORY "include/" DESTINATION "include")
+add_library(
+    visMath
+    src/visMath.cpp
+)
 
-include(InstallRequiredSystemLibraries)
-set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/License.txt)
+target_include_directories(
+    visMath
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+target_compile_options(
+    visMath
+    PRIVATE
+    -Wall
+    -Werror
+)
+
+target_compile_features(
+    visMath
+    PRIVATE  # Remove this PRIVATE if we ever include C++11 stuff in headers.
+    std_cxx_11
+)
+
+install(
+    TARGETS visMath
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION lib
+    ARCHIVE DESTINATION lib
+    EXPORT visMathTargets
+)
+
+install(
+    EXPORT visMathTargets
+    FILE visMathTargets.cmake
+    NAMESPACE vis::
+    DESTINATION cmake/
+)
+
+install(
+    DIRECTORY "include/"
+    DESTINATION "include"
+)
+
+set(CPACK_GENERATOR ZIP)
 set(CPACK_PACKAGE_VERSION_MAJOR ${visMath_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${visMath_VERSION_MINOR})
 set(CPACK_PACKAGE_CONTACT "ibbles@hotmail.com")  # Required by DEB packages.
