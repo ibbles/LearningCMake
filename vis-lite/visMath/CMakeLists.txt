@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(visMath VERSION 0.2 LANGUAGES CXX)
 
-if (NOT DEFINED BUILD_SHARED_LIBS)
-    set(BUILD_SHARED_LIBS ON)
-endif()
-
 set(CMAKE_CXX_CLANG_TIDY
     clang-tidy;
     -header-filter=.;
@@ -34,22 +30,20 @@ target_compile_options(
 target_compile_features(
     visMath
     PRIVATE  # Remove this PRIVATE if we ever include C++11 stuff in headers.
-    std_cxx_11
+    cxx_std_11
 )
 
 install(
     TARGETS visMath
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION lib
-    ARCHIVE DESTINATION lib
     EXPORT visMathTargets
+    DESTINATION lib
 )
 
 install(
     EXPORT visMathTargets
     FILE visMathTargets.cmake
     NAMESPACE vis::
-    DESTINATION cmake/
+    DESTINATION cmake
 )
 
 install(
