@@ -41,7 +41,7 @@ install(
 
 install(
     EXPORT visMathTargets
-    FILE visMathTargets.cmake
+    FILE visMathConfig.cmake
     NAMESPACE vis::
     DESTINATION cmake
 )
