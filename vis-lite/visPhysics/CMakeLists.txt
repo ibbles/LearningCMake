@@ -9,7 +9,13 @@ set(CMAKE_CXX_CLANG_TIDY
 -google-readability-namespace-comments,-llvm-namespace-comment,\
 -google-readability-namespace-comments,-google-build-using-namespace")
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/../installed/cmake)
+
+
 add_library(visPhysics src/visPhysics.cpp)
+
+find_package(visMath REQUIRED)
+target_link_libraries(visPhysics vis::visMath)
 
 target_include_directories(visPhysics
     PUBLIC
