@@ -2,7 +2,7 @@
 
 using namespace visMath;
 
-Vec3 operator+(Vec3 const& lhs, Vec3 const& rhs)
+Vec3 visMath::operator+(Vec3 const& lhs, Vec3 const& rhs)
 {
     return {
         lhs.x + rhs.x,
