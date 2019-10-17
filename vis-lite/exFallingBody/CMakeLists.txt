@@ -1,21 +1,21 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(exFallingBody VERSION 0.1)
-option(MY_VERBOSE "Make version output extra verbose." ON)
-if (MY_VERBOSE)
-    set(MY_VERBOSE 1)
-else()
-    set(MY_VERBOSE 0)
-endif()
-configure_file(config.h.in include/config.h)
+
+set(CMAKE_CXX_CLANG_TIDY
+    clang-tidy;
+    -header-filter=.;
+    "-checks=*,-llvm-header-guard,-fuchsia-overloaded-operator,\
+-google-readability-namespace-comments,-llvm-namespace-comment,\
+-google-readability-namespace-comments,-google-build-using-namespace")
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_INSTALL_PREFIX}/cmake)
 
 add_executable(exFallingBody exFallingBody.cpp)
 
-target_include_directories(exFallingBody PUBLIC "${PROJECT_BINARY_DIR}/include")
-# We don't expect our users to include config.h, but we still use PUBLIC because
-# we expect to include "config.h" in header files that our users do include.
-# Well, this is an executable so there aren't any "users" in that sense. I think
-# we should have used PRIVATE.
+find_package(visMath REQUIRED)
+find_package(visPhysics REQUIRED)
+target_link_libraries(exFallingBody vis::visPhysics)
 
 set_target_properties(
     exFallingBody PROPERTIES
