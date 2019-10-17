@@ -5,3 +5,10 @@ visPhysics::RigidBody::RigidBody()
 {
     m_position = m_position + visMath::Vec3 {1.0F, 1.0F, 1.0F};
 }
+
+
+visMath::Vec3
+visPhysics::RigidBody::getPosition() const
+{
+    return m_position;
+}
