@@ -101,13 +101,14 @@ that a property is included in both the `INTERFACE` and `PRIVATE` sets.
 | Cmpl ftrs |
 | Cmpl opts |
 ├───────────┤
-| INTERFACE | Include directories, compile features, and compile options that
+| PRIVATE   | Include directories, compile features, and compile options that
 | Incl dirs | should be applied when building the target itself.
 | Cmpl ftrs |
 | Cmpl opts |
 └───────────┘
 
-
+The link target itself is also a property, but it is always in the `INTERFACE`
+part.
 
 ## Scripting
 
