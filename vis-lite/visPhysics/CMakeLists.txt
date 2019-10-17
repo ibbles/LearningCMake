@@ -9,8 +9,7 @@ set(CMAKE_CXX_CLANG_TIDY
 -google-readability-namespace-comments,-llvm-namespace-comment,\
 -google-readability-namespace-comments,-google-build-using-namespace")
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/../installed/cmake)
-
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_INSTALL_PREFIX}/cmake)
 
 add_library(visPhysics src/visPhysics.cpp)
 
@@ -40,13 +39,13 @@ install(TARGETS visPhysics
 )
 
 install(EXPORT visPhysicsTargets
-    FILE visPhysicsExports.cmake
+    FILE visPhysicsConfig.cmake
     NAMESPACE vis::
     DESTINATION cmake
 )
 
-install(DIRECTORY
-    include
+install(
+    DIRECTORY include/
     DESTINATION include
 )
 
