@@ -35,13 +35,12 @@ target_compile_features(
 
 install(
     TARGETS visMath
-    EXPORT visMathTargets
+    EXPORT visMathConfig
     DESTINATION lib
 )
 
 install(
-    EXPORT visMathTargets
-    FILE visMathConfig.cmake
+    EXPORT visMathConfig
     NAMESPACE vis::
     DESTINATION cmake
 )
