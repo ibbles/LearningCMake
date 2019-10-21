@@ -26,7 +26,7 @@ target_include_directories(visPhysics
 target_compile_options(visPhysics
     PRIVATE
     $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Werror>
-    $<$<CXX_COMPILER_ID:Clang>:-Wevereything -Wno-c++98-compat>
+    $<$<CXX_COMPILER_ID:Clang>:-Wevereything -Wno-c++98-compat -Werror>
 )
 
 target_compile_features(visPhysics
