@@ -8,41 +8,53 @@ set(CMAKE_CXX_CLANG_TIDY
 -google-readability-namespace-comments,-llvm-namespace-comment,\
 -google-readability-namespace-comments,-google-build-using-namespace")
 
-add_library(
-    visMath
-    src/visMath.cpp
-)
 
-target_include_directories(
-    visMath
-    PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+function(add_visMath_library NAME)
+    add_library(${NAME} ${ARGN})
+    target_include_directories(
+        ${NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}include>
+        $<INSTALL_INTERFACE:include>
+    )
+    target_compile_options(
+        ${NAME} PRIVATE
+        -Wall -Werror
+    )
+    target_compile_features(
+        ${NAME} PRIVATE
+        cxx_std_11  # Remove this PRIVATE if we ever include C++11 stuff in headers.
+    )
+endfunction()
 
-target_compile_options(
-    visMath
-    PRIVATE
-    -Wall
-    -Werror
-)
 
-target_compile_features(
-    visMath
-    PRIVATE  # Remove this PRIVATE if we ever include C++11 stuff in headers.
-    cxx_std_11
-)
+add_visMath_library(visVector src/visVector.cpp)
+add_visMath_library(visMatrix src/visMatrix.cpp)
+add_visMath_library(visLinearAlgebra src/visLinearAlgebra.cpp)
+
+target_link_libraries(visLinearAlgebra visVector visMatrix)
 
 install(
-    TARGETS visMath
-    EXPORT visMathConfig
+    TARGETS visVector visMatrix
+    EXPORT visMathTypesConfig
     DESTINATION lib
 )
 
 install(
-    EXPORT visMathConfig
+    TARGETS visLinearAlgebra
+    EXPORT visMathAlgorithmsConfig
+    DESTINATION lib
+)
+
+install(
+    EXPORT visMathTypesConfig
     NAMESPACE vis::
-    DESTINATION cmake
+    DESTINATION lib/cmake
+)
+
+install(
+    EXPORT visMathAlgorithmsConfig
+    NAMESPACE vis::
+    DESTINATION lib/cmake
 )
 
 install(
