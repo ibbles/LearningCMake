@@ -18,4 +18,7 @@ fi
 project=`echo "$dirname" | cut -d '-' -f2`
 
 source_dir="../repository/vis-lite/${project}"
-cmake "$source_dir" -GNinja -DCMAKE_INSTALL_PREFIX="../installed"
+cmake "$source_dir" -GNinja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCMAKE_INSTALL_PREFIX="../installed"
