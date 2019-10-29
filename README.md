@@ -19,6 +19,7 @@ with dependencies between them. To create a build target we need to supply at
 least three pieces of information: the source files, if the target is an
 executable or a library, and the name of the binary. So we have this:
 
+```
 ┌─────────┐
 │ Target  │
 ├─────────┤
@@ -26,6 +27,7 @@ executable or a library, and the name of the binary. So we have this:
 | Type    | Executable or library.
 | Sources | List of .cpp files.
 └─────────┘
+```
 
 The name will be used not only to name the compiled file on disk, but also to
 refer to the target itself in CMake.
@@ -36,6 +38,7 @@ directives so we don't need to specify them again. However, the compiler needs
 to be told where to look for the include files. In other words it needs to know
 the include directories. So we add this information to the build target.
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -44,6 +47,7 @@ the include directories. So we add this information to the build target.
 | Sources             |
 | Include directories | List of directories.
 └─────────────────────┘
+```
 
 There are several version of the C++ standard, such as C++ standard 11 and C++
 standard 17, and the difference is sometimes important. We call the standard
@@ -51,6 +55,7 @@ that a compiler supports a feature of the compiler. There are other features as
 well, but the language standard seems to cover most cases. Regardless, for
 correctness let's call the target entry `Compiler features`.
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -60,12 +65,14 @@ correctness let's call the target entry `Compiler features`.
 | Include directories |
 | Compiler features   | Feature requirements on the compiler, such as the C++ standard.
 └─────────────────────┘
+```
 
 Sometimes we need to pass additional compile options. These are
 platform/compiler specific switches that CMake passes unchanged through the
 build system to the compiler. Here we can include things such as warning level,
 preprocessor defines, and architecture selectors such as `-mavx`.
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -76,6 +83,7 @@ preprocessor defines, and architecture selectors such as `-mavx`.
 | Compiler features   |
 | Compiler options    | Compiler options passed unchanged to the compiler
 └─────────────────────┘
+```
 
 This is enough to build basic project that only consist of a single build
 target, or rather projects that consist of independent build targets. But in the
@@ -94,6 +102,7 @@ directories, compile features, and compile options. It is common that a property
 is included in both the `INTERFACE` and `PRIVATE` sets. CMake calls such
 properties `PUBLIC` properties.
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -111,6 +120,7 @@ properties `PUBLIC` properties.
 | Compiler features   | itself.
 | Compiler options    |
 └─────────────────────┘
+```
 
 When linking with a library the `INTERFACE` properties of that library become
 `INTERFACE` properties of the linking target as well. Thus they will also be
@@ -122,6 +132,7 @@ The link target itself is also a property and is by default included in both the
 in turn links against another library will cause the linker command for the
 first target to also include the other library.
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -141,9 +152,11 @@ first target to also include the other library.
 | Compiler options    |
 | Link libraries      | Libraries that this target link against.
 └─────────────────────┘
+```
 
 The above is all the information we need to supply in order to build most
 projects.
+
 
 ## File locations
 
@@ -169,6 +182,7 @@ tree. We say that a particular include director is either part of the
 `PRIVATE` include directories as well, but for now I'm only adding it to the
 `INTERFACE` box below
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -190,6 +204,7 @@ tree. We say that a particular include director is either part of the
 | Compiler options    |
 | Link libraries      |
 └─────────────────────┘
+```
 
 
 ## Installation
@@ -202,7 +217,7 @@ simple directory copy. We may, for example, say that the directory "include"
 should be copied from the source tree to a directory with the same name in the
 install tree.
 
-
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -232,6 +247,7 @@ install tree.
 | DIRECTORIES        |
 | include → include  | Directory to copy from the source tree to the install tree.
 └────────────────────┘
+```
 
 CMake generates the file`install_manifest.txt` which lists the files installed.
 
@@ -247,6 +263,7 @@ imported together. I'm not sure if this property is in the `INTERFACE` or
 `PRIVATE` section of the target, but I placed it in the `PRIVATE` part since
 users of this target doesn't automatically become part of the same export group.
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -270,6 +287,7 @@ users of this target doesn't automatically become part of the same export group.
 | Install directory   |
 | Export group        | Export group that this target should be part of.
 └─────────────────────┘
+```
 
 When we have a collection of targets that should be exported together the next
 step is to do the actual exporting. This is a mapping from an export group to a
@@ -278,6 +296,7 @@ the rest of the non-target specific install information. CMake will allow you to
 give any name to the export group, but it seems it must end with `Config`.
 Otherwise the user project won't find it.
 
+```
 ┌──────────────────────────────┐
 │ Installs                     │
 ├──────────────────────────────┤
@@ -285,7 +304,7 @@ Otherwise the user project won't find it.
 | include → include            |
 | Export group → Config file   | Export all targets of this export group to this CMake configuration file in the install tree.
 └──────────────────────────────┘
-
+```
 
 
 ## Scripting
@@ -293,7 +312,7 @@ Otherwise the user project won't find it.
 Before we get into writing all of this as a CMake project let's summarize the
 information we need.
 
-
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -326,7 +345,7 @@ information we need.
 | include → include            |
 | Export group → Config file   |
 └──────────────────────────────┘
-
+```
 
 We control CMake using one or more files named CMakeLists.txt which contains
 CMake commands written in the CMake scripting language. We define a target
@@ -350,6 +369,7 @@ add_library(my_math my_add.cpp my_sub.cpp)
 After this call we have the following information in our target, given along
 with a note on which CMake command was used to provide the information.
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -361,6 +381,7 @@ with a note on which CMake command was used to provide the information.
 |  my_add.cpp         |
 |  my_sub.cpp         |
 └─────────────────────┘
+```
 
 The next piece of information on the list is the include directories. Naturally,
 we add include directories to a target using the `target_include_directories`
@@ -388,6 +409,7 @@ the same project, i.e., when using the `BUILD_INTERFACE`, we should look for
 headers in `my_include`, and lastly, when building other targets using an
 installed version of `my_math` we should look for headers in `my_math/include`.
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -411,6 +433,7 @@ installed version of `my_math` we should look for headers in `my_math/include`.
 |   my_include        |
 |   my_source         |
 └─────────────────────┘
+```
 
 Next up is compiler features, which we add to a target using
 `target_compile_features`.
@@ -438,6 +461,7 @@ target_compile_options(<target> INTERFACE|PUBLIC|PRIVATE <option> [<option> ...]
 target_compile_options(my_math PRIVATE -Wall -Werror)
 ```
 
+```
 Here we add some warning related compiler options.
 
 ┌─────────────────────┐
@@ -467,7 +491,7 @@ Here we add some warning related compiler options.
 | Compiler features   | target_compile_features
 | Compiler options    | target_compile_options
 └─────────────────────┘
-
+```
 
 
 To link with a library we use `target_link_libraries`.
@@ -480,6 +504,7 @@ target_link_libraries(<target> PRIVATE|PUBLIC|INTERFACE <library> [<library> ...
 target_link_libraries(my_calculator PUBLIC my_math)
 ```
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -509,7 +534,7 @@ target_link_libraries(my_calculator PUBLIC my_math)
 | Compiler options    | target_compile_options
 | Link libraries      | target_link_libraries
 └─────────────────────┘
-
+```
 
 A pattern is emerging. After having created a target, adding properties to this
 target often follows the the following template:
@@ -526,8 +551,8 @@ Unfortunately, the install configuration doesn't follow this template and is a
 bit more complicated. There are four pieces of information we must provide. The
 first is the directory that the binaries that the target produces should be
 installed. The second is the export group that the target should be part of. The
-third is the Config.cmake file that the export group should be written to, and
-lastly is any other files or directories that should be installed.
+third is the `my_Config.cmake` file that the export group should be written to,
+and lastly is any other files or directories that should be installed.
 
 The first two, binaries directory and export group, are specified using the same
 CMake command.
@@ -570,9 +595,9 @@ This has become so common that starting with CMake 3.14 the above has become the
 default when simply giving `install(TARGETS <target>)`. Just don't forget to
 also include the `EXPORT` part.
 
-The last two, the Config.cmake file and other files and directories, are not
-related to the target. We specify that a Config.cmake file should be generated
-with the follwing.
+The last two, the `my_Config.cmake` file and other files and directories, are
+not related to the target. We specify that a `my_Config.cmake` file should be
+generated with the following.
 
 ```
 install(
@@ -592,8 +617,8 @@ install(
 
 The `NAMESPACE` part is a prefix that is added to all targets in the export
 group when they are imported into another project. The purpose is to avoid name
-conflicts. The `DESTINATION` is the directory that the Config.cmake files should
-be installed to. We can use `GNUInstallDirs` here as well by setting
+conflicts. The `DESTINATION` is the directory that the `my_Config.cmake` files
+should be installed to. We can use `GNUInstallDirs` here as well by setting
 `DESTINATION` to `${CMAKE_INSTALL_LIBDIR}/cmake/my_math`.
 
 Files and directories are installed with
@@ -612,6 +637,7 @@ while if we don't include it then the directory itself is copied.
 
 The install is now complete and we have the following.
 
+```
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
@@ -628,7 +654,7 @@ The install is now complete and we have the following.
 |   build             |
 |     my_include      |
 |   install           |
-|  my_math/my_include |
+|     my_math/my_include |
 | Compiler features   | target_compile_features
 | Compiler options    | target_compile_options
 | Link libraries      | target_link_libraries
@@ -652,10 +678,51 @@ The install is now complete and we have the following.
 | include → include            | install(DIRECTORY)
 | Export group → Config file   | install(EXPORT)
 └──────────────────────────────┘
-
+```
 
 
 ## Import
 
-This section describe how to use the installed and exported files in another
-project.
+This section describe how to use installed and exported targets and files in
+another project. Since we aren't building the the target in question we're only
+interested in the `INTERFACE` part of the properties. This is exactly the
+information that is made available in the `my_Config.cmake` file. We just need a
+way to make the new CMake context aware of it. I have yet to find a way to do
+this in a way that doesn't require hard coding search paths. The
+`my_Config.cmake` file is a CMake module and we use the `CMAKE_MODULE_PATH`
+variable tell CMake where to look for modules. We simply append the directory
+containing `my_Config.cmake` to it.
+
+
+_Note to self. I'm not sure if it should be `CMAKE_MODULE_PATH` or
+`CMAKE_PREFIX_PATH`. Yesterday it worked with `CMAKE_MODULE_PATH`, but today I
+must use `CMAKE_PREFIX_PATH`. I wonder what it will be tomorrow._
+```
+list(APPEND CMAKE_MODULE_PATH <path>)
+list(APPEND CMAKE_PREFIX_PATH <path>)
+```
+
+The difficult part is to know what to put in place of `<path>`. It seems we need
+to know this ourselves somehow and either hard-coding it into the client
+`CMakeLists.txt` or by letting the user specify in on the command line when
+invoking CMake. I typically follow the convention that all projects have the
+same `${CMAKE_INSTALL_PREFIX}`, and CMake modules, such as the `my_Config.cmake`
+files, are placed in the `lib/cmake` subdirectory. Then we can use the following
+update to `CMAKE_MODULE_PATH` in any projects.
+
+```
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_INSTALL_PREFIX}/lib/cmake)
+```
+
+To use the installed library the only thing we need to do is
+
+```
+find_package(<package> REQUIRED)
+target_link_libraries(<target> <namespace>::<target>)
+```
+
+This will handle everything. Include paths will be added, compiler features and
+options will be enforced, and the linker command line will be updated to include
+the new library and all its dependencies. Well, that's the intention at least.
+Doesn't seem to work though.
+
