@@ -4,16 +4,22 @@ project(visMath VERSION 0.2 LANGUAGES CXX)
 set(CMAKE_CXX_CLANG_TIDY
     clang-tidy;
     -header-filter=.;
-    "-checks=*,-llvm-header-guard,-fuchsia-overloaded-operator,\
--google-readability-namespace-comments,-llvm-namespace-comment,\
--google-readability-namespace-comments,-google-build-using-namespace")
+    "-checks=*,-llvm-header-guard,\
+-cppcoreguidelines-avoid-magic-numbers,\
+-cppcoreguidelines-pro-bounds-constant-array-index,\
+-fuchsia-overloaded-operator,\
+-google-build-using-namespace,\
+-google-readability-namespace-comments,\
+-llvm-namespace-comment,\
+-readability-magic-numbers,\
+")
 
 
 function(add_visMath_library NAME)
     add_library(${NAME} ${ARGN})
     target_include_directories(
         ${NAME} PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     )
     target_compile_options(
