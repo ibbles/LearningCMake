@@ -689,7 +689,7 @@ interested in the `INTERFACE` part of the properties. This is exactly the
 information that is made available in the `my_Config.cmake` file. We just need a
 way to make the new CMake context aware of it. I have yet to find a way to do
 this in a way that doesn't require hard coding search paths. The
-`my_Config.cmake` file is a CMake module and we use the `CMAKE_MODULE_PATH`
+`my_Config.cmake` file is a CMake module and we use the `CMAKE_PREFIX_PATH`
 variable tell CMake where to look for modules. We simply append the directory
 containing `my_Config.cmake` to it.
 
@@ -708,7 +708,7 @@ to know this ourselves somehow and either hard-coding it into the client
 invoking CMake. I typically follow the convention that all projects have the
 same `${CMAKE_INSTALL_PREFIX}`, and CMake modules, such as the `my_Config.cmake`
 files, are placed in the `lib/cmake` subdirectory. Then we can use the following
-update to `CMAKE_MODULE_PATH` in any projects.
+update to `CMAKE_PREFIX_PATH` in any projects.
 
 ```
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_INSTALL_PREFIX}/lib/cmake)
@@ -724,5 +724,50 @@ target_link_libraries(<target> <namespace>::<target>)
 This will handle everything. Include paths will be added, compiler features and
 options will be enforced, and the linker command line will be updated to include
 the new library and all its dependencies. Well, that's the intention at least.
-Doesn't seem to work though.
+Doesn't seem to work though. The problem is that
 
+```
+install(EXPORT my_Cofig.cmake)
+```
+
+generates a broken `my_Config.cmake` that doesn't list the dependencies of the
+`my_` library. There are two workarounds for this. We can either send the `my_`
+build group to another `.cmake` file, manually write the `my_Config.cmake` file
+by adding `find_package` lines for the missing transitive dependencies and in
+`include` of the generated `.cmake`, or we can add the same `find_package` lines
+to the client's `CMakeLists.txt`. I don't like either approach.
+
+The hand-coded `my_Config.cmake` would look something like the following.
+
+```
+include(CMakeFindDependencyMacro)
+find_dependency(my_dependency)
+include("${CMAKE_CURRENT_LIST_DIR}/my_Targets.cmake")
+```
+
+and the `CMakeLists.txt` for the `my_` target should contain the following
+`install(EXPORT` instead of what we had above.
+
+```
+install(TARGETS my_ EXPORT my_Targets)
+install(FILES CMake/my_Config.cmake DESTINATION lib/cmake)
+install(
+    EXPORT my_Targets
+    FILE my_Targets.cmake
+    NAMESPACE my_::
+    DESTINATION lib/cmake)
+export(
+    TARGETS my_
+    NAMESPACE my_::
+    FILE my_Targets.cmake)
+```
+
+
+I found one example that created the `my_Config.cmake` file from `CMakeLists.txt`.
+
+```
+file(WRITE ${CMAKE_BINARY_DIR}/my_Config.cmake
+  "include(CMakeFindDependencyMacro)\n"
+  "find_dependency(my_dependency REQUIRED)\n"
+  "include(\${CMAKE_CURRENT_LIST_DIR}/my_Targets.cmake)\n")
+```
