@@ -1,14 +1,19 @@
-#include <visMath/visMath.hpp>
+#include <visMath/visVector.hpp>
 
 namespace visPhysics
 {
-    class RigidBody
+    struct RigidBody
     {
-    public:
-        RigidBody();
+        visMath::Vector position;
+        visMath::Vector velocity;
+        visMath::Vector force;
 
-        visMath::Vec3 getPosition() const;
-    private:
-        visMath::Vec3 m_position;
+        float mass;
+
+        RigidBody();
     };
+
+
+    void integrate(RigidBody& body, float timestep);
+    void applyGravity(RigidBody& body, visMath::Vector const& gravity);
 }

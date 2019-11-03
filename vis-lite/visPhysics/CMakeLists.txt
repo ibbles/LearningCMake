@@ -5,9 +5,15 @@ project(visPhysics VERSION 0.2 LANGUAGES CXX)
 set(CMAKE_CXX_CLANG_TIDY
     clang-tidy;
     -header-filter=.;
-    "-checks=*,-llvm-header-guard,-fuchsia-overloaded-operator,\
--google-readability-namespace-comments,-llvm-namespace-comment,\
--google-readability-namespace-comments,-google-build-using-namespace")
+    "-checks=*,\
+-fuchsia-overloaded-operator,\
+-google-build-using-namespace,\
+-google-readability-namespace-comments,\
+-google-runtime-references,\
+-llvm-header-guard,\
+-llvm-namespace-comment,\
+-misc-non-private-member-variables-in-classes,\
+")
 
 #list(APPEND CMAKE_MODULE_PATH ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/lib/cmake)

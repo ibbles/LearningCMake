@@ -1,14 +1,26 @@
 #include <visPhysics/visPhysics.hpp>
 
 visPhysics::RigidBody::RigidBody()
-    : m_position {0.0F, 0.0F, 0.0F}
+    : position {visMath::broadcast(0.0F)}
+    , velocity {visMath::broadcast(0.0F)}
+    , force {visMath::broadcast(0.0F)}
+    , mass  {1.0F}
 {
-    m_position = m_position + visMath::Vec3 {1.0F, 1.0F, 1.0F};
 }
 
 
-visMath::Vec3
-visPhysics::RigidBody::getPosition() const
+void visPhysics::integrate(RigidBody& body, float timestep)
 {
-    return m_position;
+    visMath::Vector const dt {visMath::broadcast(timestep)};
+    visMath::Vector const mass {visMath::broadcast(body.mass)};
+    visMath::Vector const acceleration {body.force / mass};
+    body.velocity = body.velocity + dt * acceleration;
+    body.position = body.position + dt * body.velocity;
+    body.force = visMath::broadcast(0.0F);
+}
+
+
+void visPhysics::applyGravity(RigidBody& body, visMath::Vector const& gravity)
+{
+    body.force = body.force + visMath::broadcast(body.mass) * gravity;
 }
