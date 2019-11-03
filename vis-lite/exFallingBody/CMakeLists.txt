@@ -5,15 +5,22 @@ project(exFallingBody VERSION 0.1)
 set(CMAKE_CXX_CLANG_TIDY
     clang-tidy;
     -header-filter=.;
-    "-checks=*,-llvm-header-guard,-fuchsia-overloaded-operator,\
--google-readability-namespace-comments,-llvm-namespace-comment,\
--google-readability-namespace-comments,-google-build-using-namespace")
+    "-checks=*,\
+-cppcoreguidelines-avoid-magic-numbers,\
+-fuchsia-overloaded-operator,\
+-google-readability-namespace-comments,\
+-google-build-using-namespace,\
+-llvm-header-guard,\
+-llvm-namespace-comment,\
+-readability-magic-numbers,\
+")
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_INSTALL_PREFIX}/cmake)
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 
 add_executable(exFallingBody exFallingBody.cpp)
 
-find_package(visMath REQUIRED)
+find_package(visMathTypes REQUIRED)
+find_package(visMathAlgorithms REQUIRED)
 find_package(visPhysics REQUIRED)
 target_link_libraries(exFallingBody vis::visPhysics)
 
