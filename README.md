@@ -3,10 +3,10 @@
 CMake is a build system generator. That means that CMake is used in the build
 process, but it doesn't actually run the compiler. Instead CMake generates
 project files suitable for the current platform. It may be a set of Makefiles, a
-Visual Studio project, or corresponding files for XCode. The flow is summarized
-below:
+Visual Studio project, or the corresponding files for XCode. The flow is
+summarized below:
 
-Source files → CMake → Build system → Binary files.
+Source files → CMake → Build system → Build toolchain → Binary files.
 
 
 ## Targets and its properties
@@ -16,7 +16,7 @@ one strand through the flow above. It (often) starts with a set of source files
 and (often) ends with a compiled binary. The binary can be an executable or a
 library. A single CMake project typically contains several build targets, often
 with dependencies between them. To create a build target we need to supply at
-least three pieces of information: the source files, if the target is an
+least three pieces of information: the source files, whether the target is an
 executable or a library, and the name of the binary. So we have this:
 
 ```
@@ -49,11 +49,11 @@ the include directories. So we add this information to the build target.
 └─────────────────────┘
 ```
 
-There are several version of the C++ standard, such as C++ standard 11 and C++
-standard 17, and the difference is sometimes important. We call the standard
-that a compiler supports a feature of the compiler. There are other features as
-well, but the language standard seems to cover most cases. Regardless, for
-correctness let's call the target entry `Compiler features`.
+There are several version of the C++ standard, such as C++11 and C++17, and the
+difference is sometimes important. We call the standard that a compiler supports
+a feature of the compiler. There are other features as well, but the language
+standard seems to cover most cases. Regardless, for correctness let's call the
+target entry `Compiler features`.
 
 ```
 ┌─────────────────────┐
@@ -86,21 +86,21 @@ preprocessor defines, and architecture selectors such as `-mavx`.
 ```
 
 This is enough to build basic project that only consist of a single build
-target, or rather projects that consist of independent build targets. But in the
-real world we often let one build target use functionality provided by another.
-For example a library target and an executable target that links against the
-library. This adds a bit of complexity since some, but not all, of the
-properties we assign to the library should also apply to any target that link
-with it. For example, a library may have include directories that are part of
-the interface and that user code must be able to include, but also have private
-include directories containing internal headers that only the library source
-itself needs to see. CMake models this separation by marking some properties as
-`INTERFACE` properties, meaning that they should apply to users of the build
-target instead of the target itself, while the opposite is called `PRIVATE`
-properties. Of the properties we've seen so far, this applies to the include
-directories, compile features, and compile options. It is common that a property
-is included in both the `INTERFACE` and `PRIVATE` sets. CMake calls such
-properties `PUBLIC` properties.
+target. Or rather, projects that consist of independent build targets. But in
+the real world we often let one build target use functionality provided by
+another. For example a library target and an executable target that links
+against the library. This adds a bit of complexity since some, but not all, of
+the properties we assign to the library should also apply to any target that
+link with it. For example, a library may have include directories that are part
+of the interface and that user code must be able to include, but also have
+private include directories containing internal headers that only the library
+source itself needs to see. CMake models this separation by marking some
+properties as `INTERFACE` properties, meaning that they should apply to users of
+the build target instead of the target itself, while the opposite is called
+`PRIVATE` properties. Of the properties we've seen so far, this applies to the
+include directories, compile features, and compile options. It is common that a
+property is included in both the `INTERFACE` and `PRIVATE` sets. CMake calls
+such properties `PUBLIC` properties.
 
 ```
 ┌─────────────────────┐
@@ -177,7 +177,7 @@ Header files are commonly included in both the source and the install directory
 trees, but not always with the same layout. This means that the include
 directories listed in the `INTERFACE` part of a target may need to be different
 depending on if the target is being used from the source tree or the install
-tree. We say that a particular include director is either part of the
+tree. We say that a particular include directory is either part of the
 `BUILD_INTERFACE` or the `INSTALL_INTERFACE`. I'm not sure if this applies to
 `PRIVATE` include directories as well, but for now I'm only adding it to the
 `INTERFACE` box below
@@ -347,7 +347,7 @@ information we need.
 └──────────────────────────────┘
 ```
 
-We control CMake using one or more files named CMakeLists.txt which contains
+We control CMake using one or more files named `CMakeLists.txt` which contains
 CMake commands written in the CMake scripting language. We define a target
 using either the `add_executable` command or the `add_library` command:
 
@@ -357,9 +357,10 @@ add_library(<target_name> [<link_type>] <source_file> [<source_file>]...)
 ```
 
 The link type, either `STATIC`, `SHARED`, or `MODULE`, is optional and not
-specifying it allows the builder, i.e., the developer running `CMake`, to chose.
+specifying it allows the builder, i.e., the developer running `CMake`, to chose
+by either setting or not setting the global `BUILD_SHARED_LIBS` flag.
 
-Lets make an example shared library. The `my_` prefix will be used for all
+Lets make an example library. The `my_` prefix will be used for all
 user-supplied names.
 
 ```
@@ -376,7 +377,7 @@ with a note on which CMake command was used to provide the information.
 | Name                | add_library
 |  my_math            |
 | Type                | add_library
-|  Shared library     |
+|  Library            |   Either Shared or Static depending on `BUILD_SHARED_LIBS`.
 | Sources             | add_library
 |  my_add.cpp         |
 |  my_sub.cpp         |
@@ -394,13 +395,14 @@ target_include_directories(<target> INTERFACE|PRIVATE|PUBLIC <directory> [<direc
 For example:
 
 ```
-target_include_directories(my_math PRIVATE my_source)
-
 target_include_directories(
     my_math
+    PRIVATE
+        my_source
     PUBLIC
-    $<BUILD_INTERFACE:my_include>
-    $<INSTALL_INTERFACE:my_math/include>)
+        $<BUILD_INTERFACE:my_include>
+        $<INSTALL_INTERFACE:my_math/include>
+)
 ```
 
 Here we say that when building `my_math` itself we should look for headers in
@@ -416,7 +418,7 @@ installed version of `my_math` we should look for headers in `my_math/include`.
 | Name                | add_library
 |   my_math           |
 | Type                | add_library
-|   Shared library    |
+|   Library           |
 | Sources             | add_library
 |   my_add.cpp        |
 |   my_sub.cpp        |
@@ -457,20 +459,20 @@ The compiler options are handle in a very similar way.
 target_compile_options(<target> INTERFACE|PUBLIC|PRIVATE <option> [<option> ...])
 ```
 
+Here we add some warning related compiler options:
+
 ```
 target_compile_options(my_math PRIVATE -Wall -Werror)
 ```
 
 ```
-Here we add some warning related compiler options.
-
 ┌─────────────────────┐
 │ Target              │
 ├─────────────────────┤
 | Name                | add_library
 |   my_math           |
 | Type                | add_library
-|   Shared library    |
+|   Library           |
 | Sources             | add_library
 |   my_add.cpp        |
 |   my_sub.cpp        |
@@ -499,6 +501,9 @@ To link with a library we use `target_link_libraries`.
 ```
 target_link_libraries(<target> PRIVATE|PUBLIC|INTERFACE <library> [<library> ...])
 ```
+
+Here will link the `my_calculator` target (Which isn't part of this tutorial,
+adding it is left as an exercise to the reader.) to our `my_math` library.
 
 ```
 target_link_libraries(my_calculator PUBLIC my_math)
@@ -544,21 +549,22 @@ target_<property>(<target> PRIVATE|PUBLIC|INTERFACE <item> [<item> ...])
 ```
 
 where `<property>` is one of `include_directories`, `compile_features`,
-`compile_options`, or `link_libraries`, and `<item>` is the include director,
+`compile_options`, or `link_libraries`, and `<item>` is the include directory,
 compiler feature, compiler option, or link library we wish to add to the target.
 
 Unfortunately, the install configuration doesn't follow this template and is a
 bit more complicated. There are four pieces of information we must provide. The
 first is the directory that the binaries that the target produces should be
-installed. The second is the export group that the target should be part of. The
-third is the `my_Config.cmake` file that the export group should be written to,
-and lastly is any other files or directories that should be installed.
+installed to. The second is the export group that the target should be part of.
+The third is the `my_Config.cmake` file that the export group should be written
+to, and lastly is any other files or directories that should be installed.
 
 The first two, binaries directory and export group, are specified using the same
 CMake command.
 
 ```
-install(TARGETS <target>
+install(
+    TARGETS <target>
     EXPORT <export group>
     RUNTIME DESTINATION <path>
     LIBRARY DESTINATION <path>
@@ -582,7 +588,8 @@ given as follows.
 
 ```
 include(GNUInstallDirs)
-install(TARGETS <target>
+install(
+    TARGETS <target>
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -593,7 +600,16 @@ the history of the file that what it actually does.
 
 This has become so common that starting with CMake 3.14 the above has become the
 default when simply giving `install(TARGETS <target>)`. Just don't forget to
-also include the `EXPORT` part.
+also include the `EXPORT` part, which isn't defaulted:
+
+```
+install(
+    TARGETS my_math
+    EXPORT my_mathConfig
+)
+```
+
+(I haven't tested the above but I think it should work as described.)
 
 The last two, the `my_Config.cmake` file and other files and directories, are
 not related to the target. We specify that a `my_Config.cmake` file should be
@@ -654,7 +670,7 @@ The install is now complete and we have the following.
 |   build             |
 |     my_include      |
 |   install           |
-|     my_math/my_include |
+|  my_math/my_include |
 | Compiler features   | target_compile_features
 | Compiler options    | target_compile_options
 | Link libraries      | target_link_libraries
@@ -697,6 +713,7 @@ containing `my_Config.cmake` to it.
 _Note to self. I'm not sure if it should be `CMAKE_MODULE_PATH` or
 `CMAKE_PREFIX_PATH`. Yesterday it worked with `CMAKE_MODULE_PATH`, but today I
 must use `CMAKE_PREFIX_PATH`. I wonder what it will be tomorrow._
+
 ```
 list(APPEND CMAKE_MODULE_PATH <path>)
 list(APPEND CMAKE_PREFIX_PATH <path>)
